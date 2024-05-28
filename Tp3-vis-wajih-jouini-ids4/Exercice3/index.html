@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line Chart with Animation and Legend</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .line {
+            fill: none;
+            stroke-width: 2px;
+        }
+        .axis-label {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+        .title {
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .legend {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <svg width="800" height="600"></svg>
+
+    <script>
+        
+        var margin = { top: 20, right: 30, bottom: 40, left: 50 },
+            width = 800 - margin.left - margin.right,
+            height = 600 - margin.top - margin.bottom;
+
+        var svg = d3.select("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        
+        var x = d3.scaleLinear().range([0, width]);
+        var y = d3.scaleLinear().range([height, 0]);
+
+        
+        var line = d3.line()
+                     .x(function(d) { return x(d.year); })
+                     .y(function(d) { return y(d.prop); });
+
+        
+        d3.csv("base2.csv").then(function(data) {
+            
+            data.forEach(function(d) {
+                d.year = +d.year;
+                d.prop = +d.prop;
+            });
+
+            
+            x.domain(d3.extent(data, function(d) { return d.year; }));
+            y.domain([0, d3.max(data, function(d) { return d.prop; })]);
+
+            
+            var nestedData = d3.group(data, d => d.name);
+
+            
+            var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+            
+            nestedData.forEach(function(personData, name, index) {
+                svg.append("path")
+                   .datum(personData)
+                   .attr("class", "line")
+                   .attr("d", line)
+                   .style("stroke", color(name))
+                   .on("mouseover", function(event, d) {
+                        d3.select(this)
+                          .transition()
+                          .duration(50)
+                          .style("stroke-width", 7)
+                          .style("opacity", 0.55);
+                    })
+                   .on("mouseout", function(event, d) {
+                        d3.select(this)
+                          .transition()
+                          .duration(50)
+                          .style("stroke-width", 2)
+                          .style("opacity", 1);
+                    });
+            });
+
+            
+            svg.append("g")
+               .attr("transform", "translate(0," + height + ")")
+               .call(d3.axisBottom(x));
+
+            
+            svg.append("g")
+               .call(d3.axisLeft(y));
+
+            
+            svg.append("text")
+               .attr("class", "title")
+               .attr("x", width / 2)
+               .attr("y", 0 - (margin.top / 2))
+               .attr("text-anchor", "middle")
+               .text("Line Chart with Animation and Legend");
+
+            
+            svg.append("text")
+               .attr("class", "axis-label")
+               .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.top + 10) + ")")
+               .style("text-anchor", "middle")
+               .text("Year");
+
+            
+            svg.append("text")
+               .attr("class", "axis-label")
+               .attr("transform", "rotate(-90)")
+               .attr("y", 0 - margin.left)
+               .attr("x", 0 - (height / 2))
+               .attr("dy", "1em")
+               .style("text-anchor", "middle")
+               .text("Proportion");
+
+            
+            var legend = svg.append("g")
+                            .attr("class", "legend")
+                            .attr("transform", "translate(" + (width - 100) + ",20)");
+
+            var legendItems = legend.selectAll(".legend-item")
+                                    .data(nestedData)
+                                    .enter()
+                                    .append("g")
+                                    .attr("class", "legend-item")
+                                    .attr("transform", function(d, i) {
+                                        return "translate(0," + (i * 20) + ")";
+                                    });
+
+            legendItems.append("rect")
+                       .attr("width", 10)
+                       .attr("height", 10)
+                       .style("fill", function(d) { return color(d[0]); });
+
+            legendItems.append("text")
+                       .attr("x", 15)
+                       .attr("y", 5)
+                       .attr("dy", "0.35em")
+                       .text(function(d) { return d[0]; });
+        });
+    </script>
+</body>
+</html>

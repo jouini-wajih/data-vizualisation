@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Price by symbol</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    
+    .legend {
+      font-size: 12px;
+    }
+
+    .legend rect {
+      fill: white;
+      stroke: black;
+      stroke-width: 2px;
+    }
+
+    .legend text {
+      fill: black;
+    }
+  </style>
+</head>
+<body>
+
+<script>
+  d3.csv("stocks.csv").then(function(data) {
+    const parseDate = d3.timeParse("%b %Y");
+    data.forEach(function(d) {
+      d.date = parseDate(d.date);
+      d.price = +d.price;
+    });
+
+    const margin = { top: 20, right: 20, bottom: 50, left: 70 };
+    const width = 600 - margin.left - margin.right;
+    const height = 400 - margin.top - margin.bottom;
+
+    const svg = d3.select("body").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    const symbols = Array.from(new Set(data.map(d => d.symbol)));
+
+    const xScale = d3.scaleTime()
+      .domain(d3.extent(data, d => d.date))
+      .range([0, width]);
+
+    const yScale = d3.scaleLinear()
+      .domain([0, d3.max(data, d => d.price)])
+      .range([height, 0]);
+
+    svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(xScale));
+
+    svg.append("g")
+      .call(d3.axisLeft(yScale));
+
+    symbols.forEach(symbol => {
+      const symbolData = data.filter(d => d.symbol === symbol);
+
+      const line = d3.line()
+        .x(d => xScale(d.date))
+        .y(d => yScale(0)); 
+
+      svg.append("path")
+        .datum(symbolData)
+        .attr("fill", "none")
+        .attr("stroke", color(symbol))
+        .attr("stroke-width", 1.5)
+        .attr("d", line)
+        .transition()
+        .duration(1500) 
+        .attr("d", d3.line().x(d => xScale(d.date)).y(d => yScale(d.price))); 
+    });
+
+   
+    const legend = svg.selectAll(".legend")
+      .data(symbols)
+      .enter().append("g")
+      .attr("class", "legend")
+      .attr("transform", (d, i) => "translate(0," + i * 20 + ")");
+
+    legend.append("rect")
+      .attr("x", width - 18)
+      .attr("width", 18)
+      .attr("height", 18)
+      .style("fill", color);
+
+    legend.append("text")
+      .attr("x", width - 24)
+      .attr("y", 9)
+      .attr("dy", ".35em")
+      .style("text-anchor", "end")
+      .text(d => d);
+
+  }).catch(function(error) {
+    console.log(error);
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"> 
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.1.0/chroma.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: "montserrat", Arial, Helvetica, sans-serif;
+            background-color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .dashboard-container {
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 5px;
+            max-width: 97%;
+            width: 100vw;
+            height: 90vh;
+            overflow-x: auto;
+        }
+
+        .header {
+            background-color: steelblue;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .author-credentials {
+            text-align: center;
+            font-style: italic;
+            margin-bottom: 20px;
+            color: hsl(0, 90%, 4%);
+        }
+        .legend .legend-gradient {
+            fill: url(#gradient);
+        }
+
+        .legend .legend-axis .tick line {
+            stroke: #999;
+        }
+
+        .legend .legend-label {
+            font-size: 12px;
+            fill: #0f0e0e;
+        }
+
+        #map {
+            height: 400px;
+        }
+
+        /* Add shadows to card bodies */
+        .card-body {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            /* border: 0.2px solid #0e0d0d; */
+        }
+
+        /* Adjust button position */
+        .btn-group {
+            margin-bottom: 20px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <div class="container-fluid">
+            
+            <div class="header">Student Analysis Dashboard</div>
+            <div class="author-credentials">Authors: Ayadi Aziz, Azouni Louai, Ben Fathallah Rayen, Jouini Wajih</div>
+            <div class="btn-group col-lg-12 col-12 mb-3 text-center">
+                <button id="showGroup1" class="btn btn-primary mr-3">Family Impact</button>
+                <button id="showGroup2" class="btn btn-primary">Well-Being Factors</button>
+            </div>
+            <div class="row">
+                <!-- Group 1: First set of charts -->
+                <div class="group-1 col-lg-6 col-12 mb-3">
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="m-0">Number of students succeeded Or failed Per Father Education</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="interactiveBar_F"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="group-1 col-lg-6 col-12 mb-3">
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="m-0">Number of students succeeded Or failed Per Mother Education</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="interactiveBar_M"></div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="group-1 col-lg-6 col-12 mb-3">
+                    <div class="card">
+                        <div class="card-header">Number of succeeded students per gender</div>
+                        <div class="card-body">
+                            <div id="chart-container"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="group-1 col-lg-6 col-12 mb-3">
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="m-0">Candlestick Chart Rates of PH by Village</h6>
+                            <div class="form-inline">
+                                <label for="district">District</label>
+                                <select value="Jinja" id="district"  class="form-control-sm ml-2">
+                                    <option value="Jinja">Jinja</option>
+                                    <option value="Bugiri">Bugiri</option>
+                                    <option value="Iganga">Iganga</option>
+                                    <option value="Mukono">Mukono</option>
+                                    <option value="Luweero">Luweero</option>
+                                    <option value="Nakaseke">Nakaseke</option>
+                                    <option value="Nakasongola">Nakasongola</option>
+                                    <option value="Buikwe">Buikwe</option>
+                                    <option value="Kamuli">Kamuli</option>
+                                    <option value="Kayunga">Kayunga</option>
+                                    <option value="Kamwenge">Kamwenge</option>
+                                    <option value="Lamwo">Lamwo</option>
+                                    <option value="Mubende">Mubende</option>
+                                    <option value="Luuka">Luuka</option>
+                                    <option value="Bugweri">Bugweri</option>
+                                    <option value="Wakiso">Wakiso</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="candlestick-chart"></div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="group-1 col-lg-6 col-12 mb-3">
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="m-0">Number of students succeeded Or failed Per Family Size</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="famsizeBar"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="group-1 col-lg-6 col-12 mb-3">
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="m-0">Number of students succeeded Or failed Per Parent s Cohabitation Status</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="PstatusBar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="group-1 col-lg-6 col-12 mb-3">
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="m-0">Number of students succeeded Or failed Per Mother s Job</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="MjobBar"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="group-1 col-lg-6 col-12 mb-3">
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="m-0">Number of students succeeded Or failed Per Father s Job</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="FjobBar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="group-1 col-lg-6 col-12 mb-3">
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="m-0">Number of students succeeded Or failed Per Quality of Family Relationships</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="famrelBar"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="group-1 col-lg-6 col-12 mb-3">
+                    <div class="card">
+                       <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="m-0">Number of students succeeded Or failed Per Family Educational Support</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="famsupBar"></div>
+                        </div>
+                    </div>
+                </div> 
+
+                <div class="group-2 col-lg-6 col-12 mb-3" style="display:none;">
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="m-0">
+                                Number of students succeeded Or failed  </h6>
+                            <div class="form-inline">
+                                <label for="confort">Per</label>
+                                <select value="traveltime" id="confort"  class="form-control-sm ml-2">
+                                    <option value="traveltime">Travel time</option>
+                                    <option value="studytime">Study time</option>
+                                    <option value="internet">Internet</option>
+                                    <option value="romantic">Romantic</option>
+                                    <option value="freetime">Free time</option>
+                                    <option value="goout">Go out</option>
+                                    
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="confort_chart"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="group-2 col-lg-6 col-12 mb-3" style="display:none;">
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="m-0">Avarage of Final results</h6>
+                            <div class="form-inline">
+                                <label for="confort2">Per</label>
+                                <select value="traveltime" id="confort2"  class="form-control-sm ml-2">
+                                    <option value="traveltime">Travel time</option>
+                                    <option value="studytime">Study time</option>
+                                    <option value="freetime">Free time</option>
+                                    <option value="goout">Go out</option>
+                                    
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="confort2_chart"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="group-2 col-lg-6 col-12 mb-3" style="display:none;">
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="m-0">Bubble Plot: Visualization of Average Final Results</h6>
+                            <div class="form-inline">
+                                <label for="xSelect">Per</label>
+                                <select id="xSelect" class="form-control-sm ml-2">
+                                    <option value="traveltime">Travel time</option>
+                                    <option value="studytime">Study time</option>
+                                    <option value="freetime">Free time</option>
+                                    <option value="goout">Go out</option>
+                                </select>
+                               
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="bubblePlot"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                
+
+                <div class="group-2 col-lg-12 col-12 mb-3" style="display:none;">
+                    <div class="card">
+                        <div class="card-header">Water Quality Parameter Distribution by Water Source</div>
+                        <div class="card-body">
+                            <div id="graph"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.0.0/dist/d3.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="linechart.js"></script>
+    <script src="piechart.js"></script>
+    <script src="heatmap.js"></script>
+    <script src="bubble.js"></script>
+    <script src="main.js"></script>
+    <script src="interactive_fedu.js"></script>
+    <script src="interactive_medu.js"></script>
+    <script src="confort.js"></script>
+    <script src="confort2.js"></script>
+    <script src="confort3.js"></script>
+
+    <script src=".\Utils\BarChartFcts.js"></script>
+
+    <script>
+        // Initially hide group-2
+        $(".group-2").hide();
+
+        // Function to show Group 1 charts and hide Group 2
+        $("#showGroup1").click(function() {
+            $(".group-1").show();
+            $(".group-2").hide();
+        });
+
+        // Function to show Group 2 charts and hide Group 1
+        $("#showGroup2").click(function() {
+            $(".group-1").hide();
+            $(".group-2").show();
+        });
+    </script>
+
+</body>
+</html>
